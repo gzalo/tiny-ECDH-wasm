@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ECDH Example</title>
+  <script src="ecdh.js"></script>
+  <script>
+Module.onRuntimeInitialized = () => { 
+  const ECC_PUB_KEY_SIZE = 48;
+  const ECC_PRV_KEY_SIZE = 24;
+
+  const puba_buf = Module._malloc(ECC_PUB_KEY_SIZE);
+  const prva_buf = Module._malloc(ECC_PRV_KEY_SIZE);
+  const pubb_buf = Module._malloc(ECC_PUB_KEY_SIZE);
+  const prvb_buf = Module._malloc(ECC_PRV_KEY_SIZE);
+  const seca_buf = Module._malloc(ECC_PUB_KEY_SIZE);
+  const secb_buf = Module._malloc(ECC_PUB_KEY_SIZE);
+
+  const puba = Module.HEAPU8.subarray(puba_buf, puba_buf+ECC_PUB_KEY_SIZE);
+  const prva = Module.HEAPU8.subarray(prva_buf, prva_buf+ECC_PRV_KEY_SIZE);
+  const seca = Module.HEAPU8.subarray(seca_buf, seca_buf+ECC_PUB_KEY_SIZE);
+  const pubb = Module.HEAPU8.subarray(pubb_buf, pubb_buf+ECC_PUB_KEY_SIZE);
+  const prvb = Module.HEAPU8.subarray(prvb_buf, prvb_buf+ECC_PRV_KEY_SIZE);
+  const secb = Module.HEAPU8.subarray(secb_buf, secb_buf+ECC_PUB_KEY_SIZE);
+  
+  // 1. Alice picks a (secret) random natural number 'a', calculates P = a * g and sends P to Bob. 
+  for (let i = 0; i < ECC_PRV_KEY_SIZE; i++){
+    prva[i] = Math.random() * 255;
+  }
+
+  console.log(Module._ecdh_generate_keys(puba_buf, prva_buf));
+  
+  console.log("A public key:", puba.toString());
+
+  // 2. Bob picks a (secret) random natural number 'b', calculates Q = b * g and sends Q to Alice. 
+  for (let i = 0; i < ECC_PRV_KEY_SIZE; ++i) {
+    prvb[i] = Math.random() * 255;
+  }
+
+  console.log(Module._ecdh_generate_keys(pubb_buf, prvb_buf));
+
+  console.log("B public key:", pubb.toString());
+
+  // 3. Alice calculates S = a * Q = a * (b * g). 
+  console.log(Module._ecdh_shared_secret(prva_buf, pubb_buf, seca_buf));
+
+  // 4. Bob calculates T = b * P = b * (a * g).
+  console.log(Module._ecdh_shared_secret(prvb_buf, puba_buf, secb_buf));
+
+  // 5. Assert equality, i.e. check that both parties calculated the same value. 
+  console.log("S from A:", seca.toString());
+  console.log("S from B:", secb.toString());
+}
+  </script>
+</head>
+<body>
+  
+</body>
+</html>
